@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오늘 할 일</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #1a1a2e;
+            --container-bg: #16213e;
+            --text-color: #e0e0e0;
+            --accent-color: #00d4ff;
+            --checked-color: #5a688a;
+            --danger-color: #e94560;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        #app-container {
+            width: 100%;
+            max-width: 500px;
+            background-color: var(--container-bg);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            color: var(--text-color);
+            font-size: 2rem;
+        }
+
+        .header img {
+            width: 40px;
+            height: 40px;
+        }
+
+        .input-area {
+            display: flex;
+            background-color: var(--bg-color);
+            border-radius: 30px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        #task-input {
+            flex-grow: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            padding: 15px 20px;
+            color: var(--text-color);
+            font-size: 1rem;
+        }
+
+        #add-button {
+            border: none;
+            outline: none;
+            padding: 15px 25px;
+            background-color: var(--accent-color);
+            color: #16213e;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #add-button:hover {
+            background-color: #00b8e6;
+        }
+
+        #task-list {
+            list-style: none;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 10px; /* For scrollbar */
+        }
+
+        /* Custom Scrollbar */
+        #task-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        #task-list::-webkit-scrollbar-track {
+            background: var(--bg-color);
+            border-radius: 10px;
+        }
+        #task-list::-webkit-scrollbar-thumb {
+            background: var(--accent-color);
+            border-radius: 10px;
+        }
+        #task-list::-webkit-scrollbar-thumb:hover {
+            background: #00b8e6;
+        }
+
+
+        .task-item {
+            font-size: 1rem;
+            padding: 15px 5px;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            align-items: center;
+            transition: opacity 0.3s ease;
+        }
+        
+        .task-item:not(:last-child) {
+            border-bottom: 1px solid #3a476a;
+        }
+
+
+        .task-item::before {
+            content: '';
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--accent-color);
+            border-radius: 50%;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .task-item.checked {
+            color: var(--checked-color);
+            text-decoration: line-through;
+        }
+
+        .task-item.checked::before {
+            background-color: var(--accent-color);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");
+            background-size: 16px;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        
+        .delete-btn {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 30px;
+            border: none;
+            background: none;
+            color: var(--checked-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .task-item:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .delete-btn:hover {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <div class="header">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300d4ff'%3E%3Cpath d='M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4s1.79-4 4-4h.71C7.37 8.69 9.48 7 12 7c2.76 0 5 2.24 5 5v1h2c1.66 0 3 1.34 3 3s-1.34 3-3 3zm-9-5V9h2v4h3l-4 4-4-4h3z'/%3E%3C/svg%3E" alt="icon">
+            <h1>오늘 할 일</h1>
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="task-input" placeholder="새로운 할 일을 추가하세요...">
+            <button id="add-button">추가</button>
+        </div>
+
+        <ul id="task-list">
+            <!-- <li class="task-item checked">코딩 공부하기<span class="delete-btn">&times;</span></li>
+            <li class="task-item">운동하기<span class="delete-btn">&times;</span></li> -->
+        </ul>
+    </div>
+
+    <script>
+        const taskInput = document.getElementById('task-input');
+        const addButton = document.getElementById('add-button');
+        const taskList = document.getElementById('task-list');
+
+        // 할 일 추가 함수
+        function addTask() {
+            const taskText = taskInput.value.trim();
+
+            if (taskText === '') {
+                alert("할 일을 입력해주세요!");
+                return;
+            }
+
+            // li 요소 생성
+            const li = document.createElement('li');
+            li.classList.add('task-item');
+            li.textContent = taskText;
+
+            // 삭제 버튼 생성
+            const deleteBtn = document.createElement('span');
+            deleteBtn.classList.add('delete-btn');
+            deleteBtn.innerHTML = '&times;'; // 'x' 문자
+            li.appendChild(deleteBtn);
+
+            // 리스트에 추가
+            taskList.appendChild(li);
+
+            // 입력창 비우기
+            taskInput.value = '';
+            
+            // 데이터 저장
+            saveData();
+        }
+        
+        // "추가" 버튼 클릭 이벤트
+        addButton.addEventListener('click', addTask);
+        
+        // Enter 키로도 추가 가능하게
+        taskInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                addTask();
+            }
+        });
+
+        // 할 일 완료/삭제 처리
+        taskList.addEventListener('click', function(event) {
+            const clickedElement = event.target;
+
+            if (clickedElement.tagName === 'LI') {
+                // 할 일 완료/미완료 토글
+                clickedElement.classList.toggle('checked');
+            } else if (clickedElement.classList.contains('delete-btn')) {
+                // 할 일 삭제
+                const taskItem = clickedElement.parentElement;
+                taskItem.style.opacity = '0'; // 서서히 사라지는 효과
+                setTimeout(() => {
+                    taskItem.remove();
+                    saveData(); // 삭제 후 데이터 저장
+                }, 300);
+            }
+            
+            // 삭제 외의 경우에도 데이터 저장 (체크/체크해제)
+            if (!clickedElement.classList.contains('delete-btn')) {
+                 saveData();
+            }
+        });
+
+        // 로컬 스토리지에 데이터 저장
+        function saveData() {
+            localStorage.setItem('todoData', taskList.innerHTML);
+        }
+
+        // 로컬 스토리지에서 데이터 불러오기
+        function loadData() {
+            const savedData = localStorage.getItem('todoData');
+            if (savedData) {
+                taskList.innerHTML = savedData;
+            }
+        }
+
+        // 페이지 로드 시 데이터 불러오기
+        loadData();
+
+    </script>
+</body>
+</html>
